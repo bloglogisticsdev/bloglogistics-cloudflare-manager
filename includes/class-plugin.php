@@ -66,6 +66,7 @@ final class Plugin {
 			'estimate' => __( 'Time is estimated from the last Cloudflare response. Refresh to confirm automatic expiry.', 'bloglogistics-cloudflare-manager' ),
 			'unavailable' => __( 'Time remaining was not provided by Cloudflare.', 'bloglogistics-cloudflare-manager' ),
 			'expired' => __( 'Automatic expiry is due. Refresh status to confirm.', 'bloglogistics-cloudflare-manager' ),
+			'disconnectedDomainSummary' => sprintf( __( 'Cloudflare domain: %1$s. WordPress site host: %2$s.', 'bloglogistics-cloudflare-manager' ), __( 'Not detected', 'bloglogistics-cloudflare-manager' ), Cloudflare_API::host() ),
 		) );
 	}
 
@@ -116,8 +117,6 @@ final class Plugin {
 		return array(
 			'zone' => (string) ( $zone['name'] ?? '' ), 'id' => (string) ( $zone['id'] ?? '' ),
 			'host' => Cloudflare_API::host(), 'status' => (string) ( $zone['status'] ?? 'unknown' ),
-			'plan' => (string) ( $zone['plan']['name'] ?? __( 'Not supplied', 'bloglogistics-cloudflare-manager' ) ),
-			'nameservers' => implode( ', ', array_filter( (array) ( $zone['name_servers'] ?? array() ), 'is_string' ) ),
 		);
 	}
 

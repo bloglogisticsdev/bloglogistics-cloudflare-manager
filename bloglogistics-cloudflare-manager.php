@@ -3,7 +3,7 @@
  * Plugin Name:       BlogLogistics Cloudflare Manager
  * Plugin URI:        https://github.com/bloglogisticsdev/bloglogistics-cloudflare-manager
  * Description:       Manage Cloudflare cache, purge selected URLs or an entire zone, control Development Mode, and inspect cache response headers directly from WordPress.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 7.1
  * Requires PHP:      8.3
  * Author:            BlogLogistics
@@ -19,7 +19,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BLOGLOGISTICS_CFM_VERSION', '1.0.0' );
+define( 'BLOGLOGISTICS_CFM_VERSION', '1.0.1' );
 define( 'BLOGLOGISTICS_CFM_FILE', __FILE__ );
 define( 'BLOGLOGISTICS_CFM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BLOGLOGISTICS_CFM_SLUG', 'bloglogistics-cloudflare-manager' );

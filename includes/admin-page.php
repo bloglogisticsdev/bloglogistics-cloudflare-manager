@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) || exit;
 	<section class="blcfm-card" id="blcfm-connection" aria-labelledby="blcfm-connection-title">
 		<h2 id="blcfm-connection-title"><?php esc_html_e( 'Cloudflare connection', 'bloglogistics-cloudflare-manager' ); ?></h2>
 		<div id="blcfm-status" class="blcfm-status blcfm-status-error" role="status"><?php echo $has_token ? esc_html__( 'Saved token found. Checking Cloudflare connection…', 'bloglogistics-cloudflare-manager' ) : esc_html__( 'Not connected to Cloudflare.', 'bloglogistics-cloudflare-manager' ); ?></div>
+		<p id="blcfm-zone-summary"><?php echo esc_html( sprintf( __( 'Cloudflare domain: %1$s. WordPress site host: %2$s.', 'bloglogistics-cloudflare-manager' ), $connection['zone_name'] ?? __( 'Not detected', 'bloglogistics-cloudflare-manager' ), $host ) ); ?></p>
 		<form method="post" data-operation="connect" id="blcfm-connect-form">
 			<label for="blcfm-token"><strong><?php esc_html_e( 'Cloudflare user API token', 'bloglogistics-cloudflare-manager' ); ?></strong></label>
 			<input id="blcfm-token" name="token" type="password" class="regular-text" autocomplete="new-password" spellcheck="false" maxlength="512" required aria-describedby="blcfm-token-help">
@@ -29,12 +30,9 @@ defined( 'ABSPATH' ) || exit;
 		</form>
 		<details id="blcfm-zone-details">
 			<summary><?php esc_html_e( 'Show Cloudflare zone details', 'bloglogistics-cloudflare-manager' ); ?></summary>
-			<p id="blcfm-zone-summary"><?php echo esc_html( sprintf( __( 'Cloudflare zone: %1$s. WordPress site host: %2$s.', 'bloglogistics-cloudflare-manager' ), $connection['zone_name'] ?? __( 'Not detected', 'bloglogistics-cloudflare-manager' ), $host ) ); ?></p>
 			<dl class="blcfm-details">
 				<dt><?php esc_html_e( 'Zone ID', 'bloglogistics-cloudflare-manager' ); ?></dt><dd id="blcfm-zone-id"><?php echo esc_html( $connection['zone_id'] ?? '…' ); ?></dd>
 				<dt><?php esc_html_e( 'Zone status', 'bloglogistics-cloudflare-manager' ); ?></dt><dd id="blcfm-zone-status"><?php esc_html_e( 'Refresh connection to check', 'bloglogistics-cloudflare-manager' ); ?></dd>
-				<dt><?php esc_html_e( 'Cloudflare plan', 'bloglogistics-cloudflare-manager' ); ?></dt><dd id="blcfm-zone-plan">…</dd>
-				<dt><?php esc_html_e( 'Nameservers', 'bloglogistics-cloudflare-manager' ); ?></dt><dd id="blcfm-zone-nameservers">…</dd>
 			</dl>
 		</details>
 		<details id="blcfm-disconnect" <?php echo $has_token ? '' : 'hidden'; ?>>

@@ -4,7 +4,7 @@ Tags: cloudflare, cache, purge, development mode
 Requires at least: 7.1
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -75,6 +75,10 @@ Deactivation preserves the connection. Deleting the plugin through WordPress rem
 
 == Changelog ==
 
+= 1.0.1 =
+* Remove the Cloudflare plan and nameservers from the connection display.
+* Show the Cloudflare domain and WordPress site host directly in the connection section.
+
 = 1.0.0 =
 * Initial release with token connection, automatic zone discovery, zone details, and shared BlogLogistics menu integration.
 * Add selected URL and confirmed entire-zone purges, with a timestamped last-purge record.
@@ -83,6 +87,9 @@ Deactivation preserves the connection. Deleting the plugin through WordPress rem
 * Add support for automatic plugin update checks.
 
 == Upgrade Notice ==
+
+= 1.0.1 =
+Improves the Cloudflare connection display.
 
 = 1.0.0 =
 Initial release. Requires WordPress 7.1 or later and PHP 8.3 or later.

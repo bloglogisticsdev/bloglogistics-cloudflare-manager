@@ -69,6 +69,7 @@
         clearDevelopment();
         // Keep the result visible in its action area after disconnecting.
         byId('zone-details').hidden = true;
+        if (config.disconnectedDomainSummary) byId('zone-summary').textContent = config.disconnectedDomainSummary;
       } else {
         saved = true;
         byId('zone-details').hidden = false;
@@ -77,8 +78,8 @@
     }
     if (data.details) {
       const detail = data.details;
-      byId('zone-summary').textContent = `Cloudflare zone: ${detail.zone}. WordPress site host: ${detail.host}.`;
-      ['id', 'status', 'plan', 'nameservers'].forEach((key) => { byId(`zone-${key}`).textContent = detail[key] || '…'; });
+      byId('zone-summary').textContent = `Cloudflare domain: ${detail.zone}. WordPress site host: ${detail.host}.`;
+      ['id', 'status'].forEach((key) => { byId(`zone-${key}`).textContent = detail[key] || '…'; });
       byId('token-suggestion').textContent = `${detail.zone} - BlogLogistics Cloudflare Manager`;
     }
     if (data.lastPurge) byId('last-purge').textContent = data.lastPurge;
