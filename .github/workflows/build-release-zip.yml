@@ -1,0 +1,259 @@
+name: Build WordPress Plugin ZIP
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and attach plugin ZIP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare plugin folder
+        run: |
+          PLUGIN_SLUG="bloglogistics-cloudflare-manager"
+          BUILD_DIR="/tmp/${PLUGIN_SLUG}"
+
+          rm -rf "${BUILD_DIR}"
+          mkdir -p "${BUILD_DIR}"
+
+          rsync -av \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude="${PLUGIN_SLUG}.zip" \
+            ./ "${BUILD_DIR}/"
+
+      - name: Create ZIP
+        run: |
+          PLUGIN_SLUG="bloglogistics-cloudflare-manager"
+          cd /tmp
+          zip -r "${GITHUB_WORKSPACE}/${PLUGIN_SLUG}.zip" "${PLUGIN_SLUG}"
+
+      - name: Upload ZIP to release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PLUGIN_SLUG="bloglogistics-cloudflare-manager"
+          gh release upload "${{ github.event.release.tag_name }}" "${PLUGIN_SLUG}.zip" --clobber
+
+      - name: Upload ZIP as workflow artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bloglogistics-cloudflare-manager
+          path: bloglogistics-cloudflare-manager.zip
+
+      - name: Build update manifest
+        if: github.event_name == 'release'
+        run: |
+          python3 <<'PY'
+          import datetime
+          import html
+          import json
+          import re
+          from pathlib import Path
+
+          plugin_name = "BlogLogistics Cloudflare Manager"
+          plugin_slug = "bloglogistics-cloudflare-manager"
+          repo_url = "https://github.com/bloglogisticsdev/bloglogistics-cloudflare-manager"
+          tag_name = "${{ github.event.release.tag_name }}"
+          version = tag_name.lstrip("v")
+          download_url = f"{repo_url}/releases/download/v{version}/{plugin_slug}.zip"
+          last_updated = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+
+          readme_path = Path("readme.txt")
+          readme = readme_path.read_text(encoding="utf-8", errors="replace")
+
+          def extract_readme_section(readme_text, section_name):
+              section_match = re.search(
+                  rf"^==\s*{re.escape(section_name)}\s*==\s*(.*?)(?=^==\s+|\Z)",
+                  readme_text,
+                  flags=re.IGNORECASE | re.MULTILINE | re.DOTALL,
+              )
+              return section_match.group(1).strip() if section_match else ""
+
+          def convert_inline_markup(text):
+              escaped = html.escape(text.strip())
+              escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
+              return escaped
+
+          def convert_ordered_list_to_html(section_text):
+              items = []
+              paragraphs = []
+
+              for raw_line in section_text.splitlines():
+                  line = raw_line.strip()
+                  if not line:
+                      continue
+
+                  item_match = re.match(r"^\d+\.\s+(.*)$", line)
+                  if item_match:
+                      items.append(convert_inline_markup(item_match.group(1)))
+                      continue
+
+                  paragraphs.append(convert_inline_markup(line))
+
+              html_parts = []
+
+              if items:
+                  html_parts.append("<ol>")
+                  for item in items:
+                      html_parts.append(f"<li>{item}</li>")
+                  html_parts.append("</ol>")
+
+              for paragraph in paragraphs:
+                  html_parts.append(f"<p>{paragraph}</p>")
+
+              return "".join(html_parts) if html_parts else "<p>No installation instructions available.</p>"
+
+          def convert_faq_to_html(faq_text):
+              html_parts = []
+              current_question = None
+              current_answer = []
+
+              def flush_question():
+                  nonlocal current_question, current_answer
+
+                  if not current_question:
+                      return
+
+                  answer = " ".join(line.strip() for line in current_answer if line.strip())
+                  html_parts.append(f"<h4>{convert_inline_markup(current_question)}</h4>")
+
+                  if answer:
+                      html_parts.append(f"<p>{convert_inline_markup(answer)}</p>")
+                  else:
+                      html_parts.append("<p></p>")
+
+                  current_question = None
+                  current_answer = []
+
+              for raw_line in faq_text.splitlines():
+                  line = raw_line.strip()
+
+                  if not line:
+                      continue
+
+                  question_match = re.match(r"^=\s*(.*?)\s*=$", line)
+                  if question_match:
+                      flush_question()
+                      current_question = question_match.group(1).strip()
+                      current_answer = []
+                      continue
+
+                  current_answer.append(line)
+
+              flush_question()
+
+              return "".join(html_parts) if html_parts else "<p>No FAQ available.</p>"
+
+          def convert_changelog_to_html(changelog_text):
+              html_parts = []
+              current_items = []
+
+              def flush_items():
+                  nonlocal current_items
+                  if current_items:
+                      html_parts.append("<ul>")
+                      for item in current_items:
+                          html_parts.append(f"<li>{convert_inline_markup(item)}</li>")
+                      html_parts.append("</ul>")
+                      current_items = []
+
+              for raw_line in changelog_text.splitlines():
+                  line = raw_line.strip()
+                  if not line:
+                      continue
+
+                  version_heading = re.match(r"^=\s*(.*?)\s*=$", line)
+                  if version_heading:
+                      flush_items()
+                      html_parts.append(f"<h4>{convert_inline_markup(version_heading.group(1))}</h4>")
+                      continue
+
+                  if line.startswith("*"):
+                      current_items.append(line.lstrip("*").strip())
+                      continue
+
+                  current_items.append(line)
+
+              flush_items()
+
+              return "".join(html_parts) if html_parts else "<p>No changelog available.</p>"
+
+          installation_text = extract_readme_section(readme, "Installation")
+          faq_text = extract_readme_section(readme, "Frequently Asked Questions")
+          changelog_text = extract_readme_section(readme, "Changelog")
+
+          installation_html = convert_ordered_list_to_html(installation_text)
+          faq_html = convert_faq_to_html(faq_text)
+          changelog_html = convert_changelog_to_html(changelog_text)
+
+          manifest = {
+              "name": plugin_name,
+              "version": version,
+              "download_url": download_url,
+              "homepage": repo_url,
+              "requires": "7.1",
+              "tested": "7.1",
+              "requires_php": "8.3",
+              "last_updated": last_updated,
+              "author": '<a href="https://www.bloglogistics.com" target="_blank" rel="noopener noreferrer">BlogLogistics</a>',
+              "author_profile": "https://www.bloglogistics.com",
+              "icons": {
+                  "1x": "https://updates.bloglogistics.com/plugins/assets/icon-128x128.png",
+                  "2x": "https://updates.bloglogistics.com/plugins/assets/icon-256x256.png",
+                  "default": "https://updates.bloglogistics.com/plugins/assets/icon-128x128.png",
+              },
+              "banners": {
+                  "low": "https://updates.bloglogistics.com/plugins/assets/banner-772x250.png",
+                  "high": "https://updates.bloglogistics.com/plugins/assets/banner-1544x500.png",
+                  "default": "https://updates.bloglogistics.com/plugins/assets/banner-772x250.png",
+              },
+              "sections": {
+                  "description": "Manage Cloudflare cache, purge selected URLs or an entire zone, control Development Mode, and inspect cache response headers directly from WordPress.",
+                  "installation": installation_html,
+                  "faq": faq_html,
+                  "changelog": changelog_html,
+              },
+          }
+
+          output_path = Path(f"{plugin_slug}.json")
+          output_path.write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          print(output_path.read_text(encoding="utf-8"))
+          PY
+
+      - name: Upload update manifest by FTPS
+        if: github.event_name == 'release'
+        env:
+          FTP_SERVER: ${{ secrets.BLOGLOGISTICS_UPDATES_FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.BLOGLOGISTICS_UPDATES_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.BLOGLOGISTICS_UPDATES_FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ secrets.BLOGLOGISTICS_UPDATES_FTP_SERVER_DIR }}
+        run: |
+          PLUGIN_SLUG="bloglogistics-cloudflare-manager"
+
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+          lftp -u "${FTP_USERNAME}","${FTP_PASSWORD}" "${FTP_SERVER}" <<EOF
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate false
+          cd "${FTP_SERVER_DIR}"
+          put "${PLUGIN_SLUG}.json" -o "${PLUGIN_SLUG}.json"
+          bye
+          EOF
