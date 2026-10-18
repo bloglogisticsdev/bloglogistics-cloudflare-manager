@@ -4,7 +4,7 @@ Tags: cloudflare, cache, purge, development mode
 Requires at least: 7.1
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -23,7 +23,7 @@ BlogLogistics Cloudflare Manager provides focused Cloudflare controls under the 
 * Disconnect only after opening the section and confirming token deletion.
 * Read a built-in setup tutorial with a link to Cloudflare’s current instructions.
 
-Results appear beside the action controls without page reloads. Connection status uses green or red backgrounds. Open BlogLogistics → Cloudflare Manager to use the controls.
+Use the Clear cache, Development mode, Check a URL, and Connection tabs to find the controls. Clear cache opens by default. The collapsed setup tutorial is at the bottom of Connection. Results appear beside the action controls without page reloads. Connection status uses green or red backgrounds. Open BlogLogistics → Cloudflare Manager to use the controls.
 
 The saved API token is encrypted and is not displayed again. Keep a secure copy elsewhere. You may need to reconnect after moving the site or changing its security settings. PHP Sodium or OpenSSL is required for secure token storage.
 
@@ -75,6 +75,11 @@ Deactivation preserves the connection. Deleting the plugin through WordPress rem
 
 == Changelog ==
 
+= 1.0.2 =
+* Organise the controls into Clear cache, Development mode, Check a URL, and Connection tabs.
+* Open Clear cache by default and place the collapsed setup tutorial at the bottom of Connection.
+* Add keyboard navigation between tabs and preserve entered values when switching tabs.
+
 = 1.0.1 =
 * Remove the Cloudflare plan and nameservers from the connection display.
 * Show the Cloudflare domain and WordPress site host directly in the connection section.
@@ -87,6 +92,9 @@ Deactivation preserves the connection. Deleting the plugin through WordPress rem
 * Add support for automatic plugin update checks.
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+Organises the Cloudflare controls into four tabs.
 
 = 1.0.1 =
 Improves the Cloudflare connection display.

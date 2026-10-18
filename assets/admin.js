@@ -12,6 +12,39 @@
   let development = null;
   let checkedAt = 0;
   let connectionUncertain = false;
+  const tabs = [...root.querySelectorAll('[role="tab"][data-blcfm-tab]')];
+  let activeTab = 'purge';
+
+  function updateConnectionHint() {
+    byId('connection-hint').hidden = connected || activeTab === 'connection';
+  }
+
+  function selectTab(tab, focus = false) {
+    activeTab = tab.dataset.blcfmTab;
+    tabs.forEach((item) => {
+      const selected = item === tab;
+      item.setAttribute('aria-selected', String(selected));
+      item.tabIndex = selected ? 0 : -1;
+      byId(item.dataset.blcfmTab).hidden = !selected;
+    });
+    updateConnectionHint();
+    if (focus) tab.focus();
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => selectTab(tab));
+    tab.addEventListener('keydown', (event) => {
+      let next;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+      else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = tabs.length - 1;
+      else return;
+      event.preventDefault();
+      selectTab(tabs[next], true);
+    });
+  });
+  selectTab(tabs[0]);
 
   function developmentExpired() {
     return development && development.value === 'on' && development.remaining !== null &&
@@ -37,6 +70,7 @@
     const status = byId('status');
     status.className = `blcfm-status blcfm-status-${ok ? 'success' : 'error'}`;
     status.textContent = message;
+    updateConnectionHint();
     refreshButtons();
   }
 
@@ -132,7 +166,7 @@
         byId('disconnect').querySelector('.blcfm-result').textContent = '';
         byId('disconnect').querySelector('[name="confirm"]').checked = false;
       }
-      if (!automatic) form.querySelector('.blcfm-result').focus({ preventScroll: true });
+      if (!automatic && !form.closest('[role="tabpanel"]').hidden) form.querySelector('.blcfm-result').focus({ preventScroll: true });
       return true;
     } catch (error) {
       const message = error && error.fromAPI ? error.message : config.networkError;
@@ -146,7 +180,7 @@
         clearDevelopment();
       }
       if (operation.startsWith('development_')) clearDevelopment();
-      if (!automatic) form.querySelector('.blcfm-result').focus({ preventScroll: true });
+      if (!automatic && !form.closest('[role="tabpanel"]').hidden) form.querySelector('.blcfm-result').focus({ preventScroll: true });
       return false;
     } finally {
       clearTimeout(timeout);

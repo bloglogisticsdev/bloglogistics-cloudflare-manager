@@ -6,14 +6,59 @@ defined( 'ABSPATH' ) || exit;
 	<h1>BlogLogistics Cloudflare Manager</h1>
 	<p class="blcfm-intro"><?php esc_html_e( 'Manage Cloudflare cache for this WordPress site. Connect a user API token restricted to the correct zone to get started.', 'bloglogistics-cloudflare-manager' ); ?></p>
 	<noscript><div class="notice notice-error inline"><p><?php esc_html_e( 'Enable JavaScript to use the Cloudflare controls. No actions are submitted without JavaScript.', 'bloglogistics-cloudflare-manager' ); ?></p></div></noscript>
-	<nav class="blcfm-nav" aria-label="<?php esc_attr_e( 'Cloudflare settings sections', 'bloglogistics-cloudflare-manager' ); ?>">
-		<a href="#blcfm-connection"><?php esc_html_e( 'Connection', 'bloglogistics-cloudflare-manager' ); ?></a>
-		<a href="#blcfm-purge"><?php esc_html_e( 'Clear cache', 'bloglogistics-cloudflare-manager' ); ?></a>
-		<a href="#blcfm-development"><?php esc_html_e( 'Development Mode', 'bloglogistics-cloudflare-manager' ); ?></a>
-		<a href="#blcfm-inspect"><?php esc_html_e( 'Check a URL', 'bloglogistics-cloudflare-manager' ); ?></a>
-		<a href="#blcfm-tutorial"><?php esc_html_e( 'Setup tutorial', 'bloglogistics-cloudflare-manager' ); ?></a>
-	</nav>
-	<section class="blcfm-card" id="blcfm-connection" aria-labelledby="blcfm-connection-title">
+	<div class="blcfm-tabs" role="tablist" aria-label="<?php esc_attr_e( 'Cloudflare settings', 'bloglogistics-cloudflare-manager' ); ?>">
+		<button type="button" class="blcfm-tab" id="blcfm-tab-purge" role="tab" aria-controls="blcfm-purge" aria-selected="true" tabindex="0" data-blcfm-tab="purge"><?php esc_html_e( 'Clear cache', 'bloglogistics-cloudflare-manager' ); ?></button>
+		<button type="button" class="blcfm-tab" id="blcfm-tab-development" role="tab" aria-controls="blcfm-development" aria-selected="false" tabindex="-1" data-blcfm-tab="development"><?php esc_html_e( 'Development mode', 'bloglogistics-cloudflare-manager' ); ?></button>
+		<button type="button" class="blcfm-tab" id="blcfm-tab-inspect" role="tab" aria-controls="blcfm-inspect" aria-selected="false" tabindex="-1" data-blcfm-tab="inspect"><?php esc_html_e( 'Check a URL', 'bloglogistics-cloudflare-manager' ); ?></button>
+		<button type="button" class="blcfm-tab" id="blcfm-tab-connection" role="tab" aria-controls="blcfm-connection" aria-selected="false" tabindex="-1" data-blcfm-tab="connection"><?php esc_html_e( 'Connection', 'bloglogistics-cloudflare-manager' ); ?></button>
+	</div>
+	<p id="blcfm-connection-hint" class="blcfm-connection-hint"><?php esc_html_e( 'Use the Connection tab to connect to Cloudflare or refresh its status. Cache and Development Mode controls become available after the connection is verified.', 'bloglogistics-cloudflare-manager' ); ?></p>
+	<section class="blcfm-card" id="blcfm-purge" role="tabpanel" aria-labelledby="blcfm-tab-purge" tabindex="0">
+		<h2 id="blcfm-purge-title"><?php esc_html_e( 'Clear Cloudflare cache', 'bloglogistics-cloudflare-manager' ); ?></h2>
+		<p class="blcfm-last"><strong><?php esc_html_e( 'Last Cloudflare purge:', 'bloglogistics-cloudflare-manager' ); ?></strong> <span id="blcfm-last-purge"><?php echo esc_html( $purge ); ?></span></p>
+		<h3><?php esc_html_e( 'Clear selected URLs at Cloudflare', 'bloglogistics-cloudflare-manager' ); ?></h3>
+		<form method="post" data-operation="purge_urls">
+			<label for="blcfm-urls"><?php esc_html_e( 'Enter one URL or site path per line, up to 30. Only this site’s URLs are accepted.', 'bloglogistics-cloudflare-manager' ); ?></label>
+			<textarea id="blcfm-urls" name="urls" rows="6" class="large-text code" maxlength="125000" required placeholder="<?php echo esc_attr( home_url( '/' ) . "\n/example-page/\n/wp-content/uploads/example.jpg" ); ?>" aria-describedby="blcfm-urls-help"></textarea>
+			<p class="description" id="blcfm-urls-help"><?php esc_html_e( 'Paths begin at the domain root. Query strings are preserved. For custom cache keys containing request headers or Worker-managed caches, use Cloudflare’s matching purge controls.', 'bloglogistics-cloudflare-manager' ); ?></p>
+			<p><button class="button button-primary" type="submit" disabled data-needs-connection><?php esc_html_e( 'Clear these Cloudflare URLs', 'bloglogistics-cloudflare-manager' ); ?></button></p>
+			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
+		</form>
+		<div class="blcfm-divider"></div>
+		<h3><?php esc_html_e( 'Clear the entire Cloudflare cache', 'bloglogistics-cloudflare-manager' ); ?></h3>
+		<p class="blcfm-warning"><?php esc_html_e( 'This affects all cached content in the detected zone, including other subdomains. Prefer clearing selected URLs when possible.', 'bloglogistics-cloudflare-manager' ); ?></p>
+		<form method="post" data-operation="purge_all">
+			<p><label><input type="checkbox" name="confirm" value="1" required> <?php esc_html_e( 'I understand the entire zone cache will be cleared.', 'bloglogistics-cloudflare-manager' ); ?></label></p>
+			<button class="button blcfm-danger" type="submit" disabled data-needs-connection><?php esc_html_e( 'Clear entire Cloudflare cache', 'bloglogistics-cloudflare-manager' ); ?></button>
+			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
+		</form>
+	</section>
+	<section class="blcfm-card" id="blcfm-development" role="tabpanel" aria-labelledby="blcfm-tab-development" tabindex="0" hidden>
+		<h2 id="blcfm-development-title"><?php esc_html_e( 'Development Mode', 'bloglogistics-cloudflare-manager' ); ?></h2>
+		<p><?php esc_html_e( 'Needs the optional Zone Settings Edit permission for a user API token. Cloudflare turns it off automatically after three hours. This bypasses its edge cache temporarily; it does not clear cached files. The setting affects the entire zone, including other subdomains.', 'bloglogistics-cloudflare-manager' ); ?></p>
+		<p id="blcfm-development-status" role="status"><?php esc_html_e( 'Current mode: unknown. Connect and check the status.', 'bloglogistics-cloudflare-manager' ); ?></p>
+		<form method="post" data-operation="development_set" id="blcfm-development-set">
+			<input type="hidden" name="value" value="">
+			<button class="button button-primary" type="submit" disabled data-needs-development><?php esc_html_e( 'Check Development Mode status first', 'bloglogistics-cloudflare-manager' ); ?></button>
+			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
+		</form>
+		<form method="post" data-operation="development_get" id="blcfm-development-get">
+			<button class="button" type="submit" disabled data-needs-connection><?php esc_html_e( 'Check Development Mode time remaining', 'bloglogistics-cloudflare-manager' ); ?></button>
+			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
+		</form>
+	</section>
+	<section class="blcfm-card" id="blcfm-inspect" role="tabpanel" aria-labelledby="blcfm-tab-inspect" tabindex="0" hidden>
+		<h2 id="blcfm-inspect-title"><?php esc_html_e( 'Check one URL at Cloudflare', 'bloglogistics-cloudflare-manager' ); ?></h2>
+		<p><?php esc_html_e( 'This inspects one response from this server. A missing header or DYNAMIC result does not mean the connection failed. No login cookies are sent, and redirects are shown without being followed.', 'bloglogistics-cloudflare-manager' ); ?></p>
+		<form method="post" data-operation="check_url">
+			<label for="blcfm-check-url"><?php esc_html_e( 'URL or site path', 'bloglogistics-cloudflare-manager' ); ?></label>
+			<input class="large-text" id="blcfm-check-url" type="text" name="url" maxlength="4096" required value="<?php echo esc_attr( home_url( '/' ) ); ?>">
+			<p><button class="button" type="submit" disabled><?php esc_html_e( 'Check URL', 'bloglogistics-cloudflare-manager' ); ?></button></p>
+			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
+			<div id="blcfm-inspection" hidden></div>
+		</form>
+	</section>
+	<section class="blcfm-card" id="blcfm-connection" role="tabpanel" aria-labelledby="blcfm-tab-connection" tabindex="0" hidden>
 		<h2 id="blcfm-connection-title"><?php esc_html_e( 'Cloudflare connection', 'bloglogistics-cloudflare-manager' ); ?></h2>
 		<div id="blcfm-status" class="blcfm-status blcfm-status-error" role="status"><?php echo $has_token ? esc_html__( 'Saved token found. Checking Cloudflare connection…', 'bloglogistics-cloudflare-manager' ) : esc_html__( 'Not connected to Cloudflare.', 'bloglogistics-cloudflare-manager' ); ?></div>
 		<p id="blcfm-zone-summary"><?php echo esc_html( sprintf( __( 'Cloudflare domain: %1$s. WordPress site host: %2$s.', 'bloglogistics-cloudflare-manager' ), $connection['zone_name'] ?? __( 'Not detected', 'bloglogistics-cloudflare-manager' ), $host ) ); ?></p>
@@ -45,53 +90,7 @@ defined( 'ABSPATH' ) || exit;
 				<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
 			</form>
 		</details>
-	</section>
-	<section class="blcfm-card" id="blcfm-purge" aria-labelledby="blcfm-purge-title">
-		<h2 id="blcfm-purge-title"><?php esc_html_e( 'Clear Cloudflare cache', 'bloglogistics-cloudflare-manager' ); ?></h2>
-		<p class="blcfm-last"><strong><?php esc_html_e( 'Last Cloudflare purge:', 'bloglogistics-cloudflare-manager' ); ?></strong> <span id="blcfm-last-purge"><?php echo esc_html( $purge ); ?></span></p>
-		<h3><?php esc_html_e( 'Clear selected URLs at Cloudflare', 'bloglogistics-cloudflare-manager' ); ?></h3>
-		<form method="post" data-operation="purge_urls">
-			<label for="blcfm-urls"><?php esc_html_e( 'Enter one URL or site path per line, up to 30. Only this site’s URLs are accepted.', 'bloglogistics-cloudflare-manager' ); ?></label>
-			<textarea id="blcfm-urls" name="urls" rows="6" class="large-text code" maxlength="125000" required placeholder="<?php echo esc_attr( home_url( '/' ) . "\n/example-page/\n/wp-content/uploads/example.jpg" ); ?>" aria-describedby="blcfm-urls-help"></textarea>
-			<p class="description" id="blcfm-urls-help"><?php esc_html_e( 'Paths begin at the domain root. Query strings are preserved. For custom cache keys containing request headers or Worker-managed caches, use Cloudflare’s matching purge controls.', 'bloglogistics-cloudflare-manager' ); ?></p>
-			<p><button class="button button-primary" type="submit" disabled data-needs-connection><?php esc_html_e( 'Clear these Cloudflare URLs', 'bloglogistics-cloudflare-manager' ); ?></button></p>
-			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
-		</form>
-		<div class="blcfm-divider"></div>
-		<h3><?php esc_html_e( 'Clear the entire Cloudflare cache', 'bloglogistics-cloudflare-manager' ); ?></h3>
-		<p class="blcfm-warning"><?php esc_html_e( 'This affects all cached content in the detected zone, including other subdomains. Prefer clearing selected URLs when possible.', 'bloglogistics-cloudflare-manager' ); ?></p>
-		<form method="post" data-operation="purge_all">
-			<p><label><input type="checkbox" name="confirm" value="1" required> <?php esc_html_e( 'I understand the entire zone cache will be cleared.', 'bloglogistics-cloudflare-manager' ); ?></label></p>
-			<button class="button blcfm-danger" type="submit" disabled data-needs-connection><?php esc_html_e( 'Clear entire Cloudflare cache', 'bloglogistics-cloudflare-manager' ); ?></button>
-			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
-		</form>
-	</section>
-	<section class="blcfm-card" id="blcfm-development" aria-labelledby="blcfm-development-title">
-		<h2 id="blcfm-development-title"><?php esc_html_e( 'Development Mode', 'bloglogistics-cloudflare-manager' ); ?></h2>
-		<p><?php esc_html_e( 'Needs the optional Zone Settings Edit permission for a user API token. Cloudflare turns it off automatically after three hours. This bypasses its edge cache temporarily; it does not clear cached files. The setting affects the entire zone, including other subdomains.', 'bloglogistics-cloudflare-manager' ); ?></p>
-		<p id="blcfm-development-status" role="status"><?php esc_html_e( 'Current mode: unknown. Connect and check the status.', 'bloglogistics-cloudflare-manager' ); ?></p>
-		<form method="post" data-operation="development_set" id="blcfm-development-set">
-			<input type="hidden" name="value" value="">
-			<button class="button button-primary" type="submit" disabled data-needs-development><?php esc_html_e( 'Check Development Mode status first', 'bloglogistics-cloudflare-manager' ); ?></button>
-			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
-		</form>
-		<form method="post" data-operation="development_get" id="blcfm-development-get">
-			<button class="button" type="submit" disabled data-needs-connection><?php esc_html_e( 'Check Development Mode time remaining', 'bloglogistics-cloudflare-manager' ); ?></button>
-			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
-		</form>
-	</section>
-	<section class="blcfm-card" id="blcfm-inspect" aria-labelledby="blcfm-inspect-title">
-		<h2 id="blcfm-inspect-title"><?php esc_html_e( 'Check one URL at Cloudflare', 'bloglogistics-cloudflare-manager' ); ?></h2>
-		<p><?php esc_html_e( 'This inspects one response from this server. A missing header or DYNAMIC result does not mean the connection failed. No login cookies are sent, and redirects are shown without being followed.', 'bloglogistics-cloudflare-manager' ); ?></p>
-		<form method="post" data-operation="check_url">
-			<label for="blcfm-check-url"><?php esc_html_e( 'URL or site path', 'bloglogistics-cloudflare-manager' ); ?></label>
-			<input class="large-text" id="blcfm-check-url" type="text" name="url" maxlength="4096" required value="<?php echo esc_attr( home_url( '/' ) ); ?>">
-			<p><button class="button" type="submit" disabled><?php esc_html_e( 'Check URL', 'bloglogistics-cloudflare-manager' ); ?></button></p>
-			<div class="blcfm-result" role="status" aria-live="polite" tabindex="-1"></div>
-			<div id="blcfm-inspection" hidden></div>
-		</form>
-	</section>
-	<section class="blcfm-card" id="blcfm-tutorial">
+	<div class="blcfm-tutorial" id="blcfm-tutorial">
 		<details>
 			<summary><?php esc_html_e( 'Show Cloudflare setup tutorial', 'bloglogistics-cloudflare-manager' ); ?></summary>
 			<p><?php esc_html_e( 'These steps are for a Cloudflare user API token. Dashboard labels may change. Keep the token secret and save a secure copy, Cloudflare displays the secret only once.', 'bloglogistics-cloudflare-manager' ); ?></p>
@@ -108,5 +107,6 @@ defined( 'ABSPATH' ) || exit;
 			</ol>
 			<p><a href="https://developers.cloudflare.com/fundamentals/api/get-started/create-token/" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Cloudflare’s current token instructions', 'bloglogistics-cloudflare-manager' ); ?></a></p>
 		</details>
+	</div>
 	</section>
 </div>
